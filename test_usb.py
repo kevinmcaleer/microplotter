@@ -1,3 +1,5 @@
+# main.py - MicroPython GRBL-compatible interpreter for UGS
+
 from time import sleep, ticks_ms, ticks_diff
 from stepper import StepperMotor
 from gcode_interpreter import GCodeInterpreter
@@ -7,7 +9,7 @@ import os
 # Disable REPL on USB to avoid collisions
 os.dupterm(None, 0)
 
-# Initialize stepper motors
+# # Initialize stepper motors
 motor_x = StepperMotor(14, 15, 18, 23)
 motor_y = StepperMotor(2, 3, 4, 5)
 motor_z = StepperMotor(6, 7, 8, 9)
@@ -15,32 +17,27 @@ gcode = GCodeInterpreter(motor_x, motor_y, motor_z)
 
 STEPS_PER_MM = 10  # Tune to your mechanical setup
 
-# GRBL startup banner
+# GRBL startup banner and pre-status
 sys.stdout.write("Grbl 1.1f ['$' for help]\r\n")
-sleep(0.1)
-sys.stdout.write("[MSG:'$H'|'$X' to unlock]\r\n")  # NEW
-sleep(0.1)
+# sleep(0.1)
 sys.stdout.write("<Idle|MPos:0.000,0.000,0.000|FS:0,0>\r\n")
-sleep(0.1)
+# sleep(0.1)
+sys.stdout.write("[MSG:'$H'|'$X' to unlock]\r\n")
+# sleep(0.1)
 
-# Send a few initial status reports to satisfy UGS
-# for _ in range(3):
-#     pos = gcode.position
-#     sys.stdout.write("<Idle|MPos:{:.3f},{:.3f},{:.3f}|FS:0,0>\r\n".format(
-#         pos['X'], pos['Y'], pos['Z']
-#     ))
-#     sleep(0.05)
+# Preload status reports in case of fast '?' requests
+for _ in range(3):
+    pos = gcode.position
+    sys.stdout.write("<Idle|MPos:{:.3f},{:.3f},{:.3f}|FS:0,0>\r\n".format(
+        pos['X'], pos['Y'], pos['Z']
+    ))
+#     sleep(0.1)
 
 last_status = ticks_ms()
 
-for _ in range(3):
-    sys.stdout.write("<Idle|MPos:0.000,0.000,0.000|FS:0,0>\r\n")
-    sleep(0.1)
-
 while True:
     try:
-        # Send status update every 2s
-#         sys.stdout.write("<Idle|time now{}, last_status{}".format(ticks_ms(),last_status))
+        # Periodic status
         if ticks_diff(ticks_ms(), last_status) > 2000:
             pos = gcode.position
             sys.stdout.write("<Idle|MPos:{:.3f},{:.3f},{:.3f}|FS:0,0>\r\n".format(
@@ -49,18 +46,25 @@ while True:
             last_status = ticks_ms()
 
         line = sys.stdin.readline()
+        line = line.strip("\r\n")
         if not line:
             continue
-        line = line.strip()
+ 
+        if line == '\x18':  # Soft reset (Ctrl-X / 0x18)
+            # Re-send banner
+            sys.stdout.write("Grbl 1.1f ['$' for help]\r\n")
+#             sleep(0.1)
+            sys.stdout.write("<Idle|MPos:0.000,0.000,0.000|FS:0,0>\r\n")
+            continue
 
         if line == '?':
             pos = gcode.position
             sys.stdout.write("<Idle|MPos:{:.3f},{:.3f},{:.3f}|FS:0,0>\r\n".format(
                 pos['X'], pos['Y'], pos['Z']
             ))
-
+            
         elif line == '$I':
-            sys.stdout.write("[VER:1.1f.20250619:]\r\n")
+            sys.stdout.write("[VER:MicroPythonGRBL:1.1]\r\n")
             sys.stdout.write("[OPT:MPY,USB,3AXIS]\r\n")
             sys.stdout.write("ok\r\n")
 
@@ -70,9 +74,7 @@ while True:
         elif line == '$':
             sys.stdout.write("$$=not_implemented\r\n")
             sys.stdout.write("ok\r\n")
-        elif line == '$$':
-            sys.stdout.write("$$=not_implemented\r\n")
-            sys.stdout.write("ok\r\n")
+
         elif line == '$G':
             sys.stdout.write("[G91 G21 G94]\r\n")
             sys.stdout.write("ok\r\n")
