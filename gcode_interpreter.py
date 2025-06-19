@@ -36,3 +36,18 @@ class GCodeInterpreter:
 
         # Update current position
         self.position.update(target)
+        
+        def set_position(self, **kwargs):
+            for axis in ('X', 'Y', 'Z'):
+                if axis in kwargs:
+                    self.position[axis] = kwargs[axis]
+
+        def jog(self, dx=0, dy=0, dz=0):
+            if dx:
+                self.motor_x.move(abs(dx), direction=1 if dx > 0 else -1)
+            if dy:
+                self.motor_y.move(abs(dy), direction=1 if dy > 0 else -1)
+            if dz:
+                self.motor_z.move(abs(dz), direction=1 if dz > 0 else -1)
+            # Don't update position, jogs are temporary unless committed
+
