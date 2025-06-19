@@ -19,17 +19,23 @@ STEPS_PER_MM = 10  # Tune to your mechanical setup
 sys.stdout.write("Grbl 1.1f ['$' for help]\r\n")
 sleep(0.1)
 sys.stdout.write("[MSG:'$H'|'$X' to unlock]\r\n")  # NEW
+sleep(0.1)
 sys.stdout.write("<Idle|MPos:0.000,0.000,0.000|FS:0,0>\r\n")
+sleep(0.1)
 
 # Send a few initial status reports to satisfy UGS
-for _ in range(3):
-    pos = gcode.position
-    sys.stdout.write("<Idle|MPos:{:.3f},{:.3f},{:.3f}|FS:0,0>\r\n".format(
-        pos['X'], pos['Y'], pos['Z']
-    ))
-    sleep(0.05)
+# for _ in range(3):
+#     pos = gcode.position
+#     sys.stdout.write("<Idle|MPos:{:.3f},{:.3f},{:.3f}|FS:0,0>\r\n".format(
+#         pos['X'], pos['Y'], pos['Z']
+#     ))
+#     sleep(0.05)
 
 last_status = ticks_ms()
+
+for _ in range(3):
+    sys.stdout.write("<Idle|MPos:0.000,0.000,0.000|FS:0,0>\r\n")
+    sleep(0.1)
 
 while True:
     try:
@@ -54,7 +60,7 @@ while True:
             ))
 
         elif line == '$I':
-            sys.stdout.write("[VER:MicroPythonGRBL:1.1]\r\n")
+            sys.stdout.write("[VER:1.1f.20250619:]\r\n")
             sys.stdout.write("[OPT:MPY,USB,3AXIS]\r\n")
             sys.stdout.write("ok\r\n")
 
@@ -64,7 +70,9 @@ while True:
         elif line == '$':
             sys.stdout.write("$$=not_implemented\r\n")
             sys.stdout.write("ok\r\n")
-
+        elif line == '$$':
+            sys.stdout.write("$$=not_implemented\r\n")
+            sys.stdout.write("ok\r\n")
         elif line == '$G':
             sys.stdout.write("[G91 G21 G94]\r\n")
             sys.stdout.write("ok\r\n")
