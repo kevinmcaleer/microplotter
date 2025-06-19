@@ -34,7 +34,7 @@ last_status = ticks_ms()
 while True:
     try:
         # Send status update every 2s
-        sys.stdout.write("<Idle|time now{}, last_status{}".format(ticks_ms(),last_status))
+#         sys.stdout.write("<Idle|time now{}, last_status{}".format(ticks_ms(),last_status))
         if ticks_diff(ticks_ms(), last_status) > 2000:
             pos = gcode.position
             sys.stdout.write("<Idle|MPos:{:.3f},{:.3f},{:.3f}|FS:0,0>\r\n".format(
