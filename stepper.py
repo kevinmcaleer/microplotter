@@ -13,7 +13,7 @@ class StepperMotor:
         (1, 0, 0, 1)
     ]
 
-    def __init__(self, in1, in2, in3, in4, speed=0.0005):
+    def __init__(self, in1, in2, in3, in4, speed=0.005):
         self.coil_a_1 = Pin(in1, Pin.OUT)
         self.coil_a_2 = Pin(in2, Pin.OUT)
         self.coil_b_1 = Pin(in3, Pin.OUT)
