@@ -2,7 +2,14 @@ from machine import Pin
 from time import sleep_us
 
 class StepperMotor:
-    step_sequence = [
+    full_sequence = [
+        (1, 1, 0, 0),
+        (0, 1, 1, 0),
+        (0, 0, 1, 1),
+        (1, 0, 0, 1)
+    ]
+
+    half_sequence = [
         (1, 0, 0, 0),
         (1, 1, 0, 0),
         (0, 1, 0, 0),
@@ -13,7 +20,7 @@ class StepperMotor:
         (1, 0, 0, 1)
     ]
 
-    def __init__(self, in1, in2, in3, in4, delay_us=1500):
+    def __init__(self, in1, in2, in3, in4, delay_us=1500, mode='full'):
         self.coils = [
             Pin(in1, Pin.OUT),
             Pin(in2, Pin.OUT),
@@ -21,6 +28,16 @@ class StepperMotor:
             Pin(in4, Pin.OUT)
         ]
         self.delay_us = delay_us
+        self.set_step_mode(mode)
+
+    def set_step_mode(self, mode):
+        """Set stepping mode: 'full' or 'half'"""
+        if mode == 'full':
+            self.step_sequence = self.full_sequence
+        elif mode == 'half':
+            self.step_sequence = self.half_sequence
+        else:
+            raise ValueError("Invalid mode. Use 'full' or 'half'.")
 
     def set_step(self, step):
         for i, coil in enumerate(self.coils):
@@ -31,7 +48,7 @@ class StepperMotor:
         for _ in range(int(steps)):
             for step in seq:
                 self.set_step(step)
-                sleep_us(self.delay_us)  # precise microsecond timing
+                sleep_us(self.delay_us)
 
     def stop(self):
         self.set_step((0, 0, 0, 0))

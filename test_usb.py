@@ -13,7 +13,7 @@ motor_x = StepperMotor(14, 15, 18, 23)
 motor_y = StepperMotor(2, 3, 4, 5)
 motor_z = StepperMotor(6, 7, 8, 9)
 gcode   = GCodeInterpreter(motor_x, motor_y, motor_z)
-STEPS_PER_MM = 10
+STEPS_PER_MM = 1 # 1000 steps = 9cm its about 1mm per step
 
 # --- At the top of your file, define settings with descriptions ---
 grbl_settings = {
@@ -152,7 +152,7 @@ while True:
             sys.stdout.write("ok\r\n")
 
         elif line == '$G':
-            sys.stdout.write("[G91 G21 G94]\r\n")
+            sys.stdout.write("[G91 G21 G94]\r\n") # What does this do?
             sys.stdout.write("ok\r\n")
 
         elif line.startswith('G92'):

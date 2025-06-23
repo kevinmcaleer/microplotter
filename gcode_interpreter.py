@@ -10,11 +10,11 @@ class GCodeInterpreter:
         if not line or not line.startswith(('G0', 'G1')):
             return  # Ignore unsupported commands
 
-        parts = line.split()
-        cmd = parts[0]
+        parts = line.split() # ['G0' ,'X1', 'Y2', 'Z3']
+        cmd = parts[0] #G0
         target = self.position.copy()
 
-        for part in parts[1:]:
+        for part in parts[1:]:# part = ['X1', 'Y2', 'Z3']
             axis = part[0]
             if axis in 'XYZ':
                 try:
@@ -37,7 +37,7 @@ class GCodeInterpreter:
         # Update current position
         self.position.update(target)
         
-    def set_position(self, **kwargs):
+    def set_position(self, **kwargs): # x=1,y=2, z =3
         for axis in ('X', 'Y', 'Z'):
             if axis in kwargs:
                 self.position[axis] = kwargs[axis]
