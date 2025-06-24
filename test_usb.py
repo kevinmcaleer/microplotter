@@ -9,9 +9,11 @@ import sys, os, select
 os.dupterm(None, 0)
 
 # === Hardware setup ===
-motor_x = StepperMotor(14, 15, 18, 23)
+motor_x = StepperMotor(14, 15, 18, 23, endstop_pin=12)
 motor_y = StepperMotor(2, 3, 4, 5)
 motor_z = StepperMotor(6, 7, 8, 9)
+
+
 gcode   = GCodeInterpreter(motor_x, motor_y, motor_z)
 STEPS_PER_MM = 1 # 1000 steps = 9cm its about 1mm per step
 
@@ -181,6 +183,14 @@ while True:
                         dz = float(tok[1:]) * STEPS_PER_MM
                 gcode.jog(dx, dy, dz)
                 sys.stdout.write("ok\r\n")
+        elif line == '$H':
+            sys.stdout.write("[MSG:Homing...]\r\n")
+            # Move until endstop is hit
+            while not motor_x.is_endstop_triggered():
+                motor_x.move(1, direction=-1)  # move slowly in -X until stop
+            motor_x.stop()
+            gcode.set_position(X=0)
+            sys.stdout.write("ok\r\n")
 
         else:
             # All other G-code (motion)
