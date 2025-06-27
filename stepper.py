@@ -28,6 +28,7 @@ class StepperMotor:
         self.set_step_mode(mode)
         self.delay_us = delay_us
         self.end_stop_direction = endstop_direction
+        self.invert_direction = False 
 
     def set_step_mode(self, mode):
         if mode == "full":
@@ -39,6 +40,9 @@ class StepperMotor:
         print(f"Mode: {self.step_sequence}")
 
     def move(self, steps, direction=1):
+        if self.invert_direction:
+            direction *= -1
+        
         seq = self.step_sequence if direction > 0 else self.step_sequence[::-1]
 
         for _ in range(int(steps)):
@@ -49,8 +53,8 @@ class StepperMotor:
                 break
 
             for step in seq:
-                self.set_step(step)
                 try:
+                    self.set_step(step)
                     sleep_us(self.delay_us)
                 except Exception as e:
                     print(f"Error during sleep: {e}")

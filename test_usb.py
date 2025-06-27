@@ -8,14 +8,15 @@ import sys, os, select
 # Disable MicroPython REPL on USB
 os.dupterm(None, 0)
 
-# === Hardware setup ===
-motor_x = StepperMotor(14, 15, 18, 23, endstop_pin=12)
-motor_y = StepperMotor(2, 3, 4, 5)
-motor_z = StepperMotor(6, 7, 8, 9)
+motor_y = StepperMotor(0, 1, 2, 3, endstop_pin=16, endstop_direction=1)
+# motor_x.invert_direction=True # the microswitch is on the right hand side
+motor_x = StepperMotor(4, 5, 6, 7, endstop_pin=15, endstop_direction=-1)
+motor_z = StepperMotor(8, 9, 10, 11)
 
 
 gcode   = GCodeInterpreter(motor_x, motor_y, motor_z)
-STEPS_PER_MM = 1 # 1000 steps = 9cm its about 1mm per step
+STEPS_PER_MM = 11 # 1000 steps = 9cm its about 11mm per step
+gcode.steps_per_mm = STEPS_PER_MM
 
 # --- At the top of your file, define settings with descriptions ---
 grbl_settings = {
@@ -50,7 +51,7 @@ question_counter   = 0
 last_question_time = 0
 last_status_time   = ticks_ms()
 
-IDLE_RESET_MS      = 3000  # if no '?' for this long, treat as new session
+IDLE_RESET_MS      = 8000  # if no '?' for this long, treat as new session
 REQ_INTERVAL_MS    = 1500  # max gap between two '?' for banner trigger
 STATUS_INTERVAL_MS = 2000  # send idle status every 2s after banner
 
@@ -87,9 +88,9 @@ while True:
         now = ticks_ms()
 
         # If no '?' for a while, assume UGS reconnected → reset banner logic
-        if banner_sent and ticks_diff(now, last_question_time) > IDLE_RESET_MS:
-            banner_sent      = False
-            question_counter = 0
+#         if banner_sent and ticks_diff(now, last_question_time) > IDLE_RESET_MS:
+#             banner_sent      = False
+#             question_counter = 0
 
         # Periodic idle status after banner
         if banner_sent and ticks_diff(now, last_status_time) > STATUS_INTERVAL_MS:
@@ -136,7 +137,7 @@ while True:
         if not banner_sent and line.startswith('$'):
             send_banner()
 
-        # ——— GRBL-style commands ———
+         # ——— GRBL-style commands ———
         if line == '$I':
             sys.stdout.write("[VER:MicroPythonGRBL:1.1]\r\n")
             sys.stdout.write("[OPT:MPY,USB,3AXIS]\r\n")
@@ -153,10 +154,15 @@ while True:
                 sys.stdout.write(f"${key}={val} ({desc})\r\n")
             sys.stdout.write("ok\r\n")
 
-        elif line == '$G':
-            sys.stdout.write("[G91 G21 G94]\r\n") # What does this do?
+        elif line in ['$G','??$G','?$G']:
+            # G90 means absolute positioning
+            # G91 means relative positioning
+            # G21 means?
+            # G93 means?
+            mode = "G91" if gcode.relative_mode else "G90"
+            sys.stdout.write(f"[{mode} G21 G94]\r\n")
             sys.stdout.write("ok\r\n")
-
+            
         elif line.startswith('G92'):
             # Set position
             new_pos = {}
@@ -183,13 +189,18 @@ while True:
                         dz = float(tok[1:]) * STEPS_PER_MM
                 gcode.jog(dx, dy, dz)
                 sys.stdout.write("ok\r\n")
-        elif line == '$H':
+        elif line in ['$H','$H']:
             sys.stdout.write("[MSG:Homing...]\r\n")
             # Move until endstop is hit
             while not motor_x.is_endstop_triggered():
                 motor_x.move(1, direction=-1)  # move slowly in -X until stop
+                sys.stdout.write("[MSG: Moving X]\r\n")
+            while not motor_y.is_endstop_triggered():
+                motor_y.move(1, direction=1)
+                sys.stdout.write("[MSG: Moving Y]\r\n")
             motor_x.stop()
-            gcode.set_position(X=0)
+            motor_y.stop()
+            gcode.set_position(X=0,Y=0)
             sys.stdout.write("ok\r\n")
 
         else:
