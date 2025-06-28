@@ -10,4 +10,4 @@ G1 X10 Y10      ; Move to top-right corner
 G1 X0 Y10       ; Move to top-left corner
 G1 X0 Y0        ; Move back to origin
 
-G1 Z1 F300      ; Lift the tool up again
+G1 Z0 F300      ; Lift the tool up again
